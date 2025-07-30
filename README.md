@@ -390,6 +390,42 @@ Error: YouTrack API Error (400): invalid_query
   - Validate project IDs with `validate_project` before querying
   - Use `discover_project_fields` to check available fields
 
+**🔴 State Change Errors (400: Bad Request)**
+```
+Error: YouTrack API Error (400): Bad Request
+Context: changeIssueState with newState: 'Fixed'
+```
+- **Cause**: Invalid state transitions or unavailable states in workflow
+- **Solutions**:
+  - Use `get_issue_workflow_states` to check available states for the issue
+  - Common working states: "Open", "Done", "Resolved", "Closed"
+  - Avoid custom states like "Fixed" - use "Done" or "Resolved" instead
+  - Check project workflow configuration in YouTrack admin
+
+**🔴 Time Logging Errors (403: Forbidden)**
+```
+Error: YouTrack API Error (403): Forbidden
+Context: logWorkTime
+```
+- **Cause**: Insufficient permissions for time tracking
+- **Solutions**:
+  - Verify token has "Time Tracking" permissions in YouTrack
+  - Check if time tracking is enabled for the project
+  - Use lower-privilege operations or request permission upgrade
+  - Time logging failures don't prevent issue completion
+
+**🔴 Sprint Creation Errors (400: invalid_properties)**
+```
+Error: YouTrack API Error (400): invalid_properties
+Context: createSprint
+```
+- **Cause**: Invalid sprint properties or board configuration
+- **Solutions**:
+  - Use `get_board_details` to check board configuration
+  - Verify board ID exists and is accessible
+  - Check date format (YYYY-MM-DD) and ensure start < finish
+  - Ensure sprint name doesn't conflict with existing sprints
+
 **🔴 Server Errors (500)**
 ```
 Error: YouTrack API Error (500): server_error
@@ -422,12 +458,61 @@ Logs show: "Discovered 71 tools" but README claims different number
 - **Query Failures**: Use `get_query_suggestions` for syntax help
 - **Performance**: Enable caching and use pagination for large datasets
 - **Field Errors**: Run `discover_project_fields` to validate available fields
+- **State Changes**: Always use `get_issue_workflow_states` before changing states
+- **Sprint Management**: Verify board access with `get_board_details` before creating sprints
+- **Time Logging**: Check time tracking permissions; failures don't block issue completion
+- **Issue Creation**: Validate project access and required fields before creation
+
+#### **Workflow Tips**
+**✅ Issue Completion Pattern:**
+1. Use `change_issue_state` with "Done" instead of "Fixed"
+2. If time logging fails (403), issue completion still succeeds
+3. Check available states with `get_issue_workflow_states` first
+
+**✅ Sprint Management Pattern:**
+1. List boards with `list_agile_boards`
+2. Get board details with `get_board_details` 
+3. Verify sprint parameters before creation
+4. Use standard date format (YYYY-MM-DD)
+
+**✅ Permission Management:**
+- Standard user tokens work for most operations
+- Time tracking may require additional permissions
+- Some advanced features need admin access
 
 #### **Debug Steps**
 1. **Connection Test**: `npm test`
 2. **Project Validation**: Use `validate_project` tool
 3. **Field Discovery**: Use `discover_project_fields` for available fields
-4. **Query Testing**: Start with simple queries before complex ones
+4. **Workflow States**: Use `get_issue_workflow_states` to check valid transitions
+5. **Board Access**: Use `get_board_details` to verify sprint creation permissions
+6. **Permission Check**: Try basic operations before advanced features
+7. **Error Pattern Analysis**: Check logs for specific error types (400 vs 403 vs 500)
+
+#### **Common Error Patterns**
+
+**Pattern: State Change Fallback**
+```
+❌ Failed to change issue to state: Fixed, trying next...
+✅ Successfully changed issue to state: Done
+```
+- **Normal Behavior**: Server automatically tries alternative valid states
+- **Solution**: Use standard states like "Done", "Resolved", "Closed"
+
+**Pattern: Permission Escalation**
+```
+Error: YouTrack API Error (403): Forbidden (time logging)
+✅ Successfully changed issue state (continues despite time log failure)
+```
+- **Normal Behavior**: Issue completion succeeds even if time logging fails
+- **Solution**: Request time tracking permissions if needed, or ignore time log failures
+
+**Pattern: Server Validation**
+```
+Error: YouTrack API Error (400): invalid_properties (sprint creation)
+Error: YouTrack API Error (500): server_error (issue creation)
+```
+- **Solution**: Validate inputs with discovery tools before creation operations
 
 ## 🤝 **Contributing**
 
