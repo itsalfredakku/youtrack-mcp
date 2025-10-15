@@ -170,7 +170,11 @@ export class KnowledgeBaseAPIClient extends BaseAPIClient {
     if (updates.title) updateData.summary = updates.title;
     if (updates.content !== undefined) updateData.content = updates.content;
     if (updates.summary !== undefined) updateData.description = updates.summary;
-    if (updates.tags) updateData.tags = updates.tags.map(tag => ({ name: tag }));
+    
+    // SKIP tags - they require tag IDs not names, causing:
+    // "YouTrack is unable to locate an Tag-type entity unless its ID is also provided"
+    // Tags should be managed through YouTrack UI or separate tag API endpoints
+    // if (updates.tags) updateData.tags = updates.tags.map(tag => ({ name: tag }));
     
     // Skip visibility update - it requires complex permission group handling
     // and causes type mismatch errors in YouTrack API
@@ -306,6 +310,7 @@ export class KnowledgeBaseAPIClient extends BaseAPIClient {
     const endpoint = `/articles/${childArticleId}`;
     
     const updateData = {
+      $type: 'Article',  // Required for entity identification
       parentArticle: { id: parentArticleId }
     };
 
@@ -324,6 +329,7 @@ export class KnowledgeBaseAPIClient extends BaseAPIClient {
     const endpoint = `/articles/${articleId}`;
     
     const updateData = {
+      $type: 'Article',
       parentArticle: null
     };
 

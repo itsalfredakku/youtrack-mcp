@@ -246,7 +246,7 @@ function createToolDefinitions(configLoader: DynamicConfigLoader) {
   // KNOWLEDGE MANAGEMENT TOOLS
   {
     name: 'knowledge_base',
-    description: `Knowledge base: list, get, create, update, delete, search articles
+    description: `Knowledge base: list, get, create, update, delete, search articles, manage hierarchy
 
 ⚠️ IMPORTANT: When creating/updating articles, the 'title' field becomes the article heading.
 NEVER include "# Title" in the content field - it will duplicate. Start content with "##" or body text.`,
@@ -255,12 +255,20 @@ NEVER include "# Title" in the content field - it will duplicate. Start content 
       properties: {
         action: {
           type: 'string',
-          enum: ['list', 'get', 'create', 'update', 'delete', 'search'],
-          description: 'Action: list (all articles), get (single), create (new), update (edit), delete (remove), search (find)'
+          enum: ['list', 'get', 'create', 'update', 'delete', 'search', 'link_sub_article', 'unlink_parent', 'get_hierarchy'],
+          description: 'Action: list (all articles), get (single), create (new), update (edit), delete (remove), search (find), link_sub_article (set parent-child relationship), unlink_parent (remove parent link), get_hierarchy (get article hierarchy tree)'
         },
         articleId: {
           type: 'string',
-          description: 'Article ID (required for get, update, delete)'
+          description: 'Article ID (required for get, update, delete, unlink_parent, get_hierarchy)'
+        },
+        parentArticleId: {
+          type: 'string',
+          description: 'Parent article ID (required for link_sub_article)'
+        },
+        childArticleId: {
+          type: 'string',
+          description: 'Child article ID (required for link_sub_article)'
         },
         title: {
           type: 'string',
@@ -1078,7 +1086,7 @@ export class YouTrackMCPServer {
   }
 
   private async handleKnowledgeManage(client: any, args: any) {
-    const { action, articleId, title, content, summary, tags, searchTerm, projectId } = args;
+    const { action, articleId, parentArticleId, childArticleId, title, content, summary, tags, searchTerm, projectId } = args;
     
     switch (action) {
       case 'list':
@@ -1101,6 +1109,21 @@ export class YouTrackMCPServer {
         return await client.knowledgeBase.deleteArticle(articleId);
       case 'search':
         return await client.knowledgeBase.searchArticles(searchTerm, false, projectId, tags);
+      case 'link_sub_article':
+        if (!parentArticleId || !childArticleId) {
+          throw new Error('Both parentArticleId and childArticleId are required for link_sub_article action');
+        }
+        return await client.knowledgeBase.linkAsSubArticle(parentArticleId, childArticleId);
+      case 'unlink_parent':
+        if (!articleId) {
+          throw new Error('articleId is required for unlink_parent action');
+        }
+        return await client.knowledgeBase.unlinkFromParent(articleId);
+      case 'get_hierarchy':
+        if (!articleId) {
+          throw new Error('articleId is required for get_hierarchy action');
+        }
+        return await client.knowledgeBase.getArticleHierarchy(articleId);
       default:
         throw new Error(`Unknown knowledge action: ${action}`);
     }
