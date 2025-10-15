@@ -161,7 +161,12 @@ export class KnowledgeBaseAPIClient extends BaseAPIClient {
       }
     }
     
-    const updateData: any = {};
+    // CRITICAL: YouTrack API requires $type discriminator for entity identification
+    // Based on OpenAPI spec: all Article updates must include $type: "Article"
+    const updateData: any = {
+      $type: 'Article'
+    };
+    
     if (updates.title) updateData.summary = updates.title;
     if (updates.content !== undefined) updateData.content = updates.content;
     if (updates.summary !== undefined) updateData.description = updates.summary;
