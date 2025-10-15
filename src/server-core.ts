@@ -744,15 +744,49 @@ export class YouTrackMCPServer {
     this.setupToolHandlers();
   }
 
-  private resolveProjectId(providedProjectId?: string): string {
+  /**
+   * Resolve project ID with strict scoping enforcement
+   * 
+   * Security Behavior:
+   * - If defaultProjectId is configured: ALWAYS use it (ignore providedProjectId)
+   *   This ensures assistants cannot access other projects even with valid tokens
+   * 
+   * - If defaultProjectId is NOT configured: Require providedProjectId
+   *   This allows multi-project access when explicitly intended
+   * 
+   * @param providedProjectId - Project ID from tool request (ignored if config has default)
+   * @param allowOverride - If true, allow providedProjectId to override config (default: false)
+   * @returns Resolved project ID
+   * @throws Error if no project ID available or scope violation
+   */
+  private resolveProjectId(providedProjectId?: string, allowOverride: boolean = false): string {
     const config = this.config.get();
-    const projectId = providedProjectId || config.defaultProjectId;
+    const configuredProjectId = config.defaultProjectId;
     
-    if (!projectId) {
-      throw new Error('Project ID is required. Either provide projectId parameter or set PROJECT_ID environment variable.');
+    // If project ID is configured in environment/config, enforce it
+    if (configuredProjectId) {
+      // Warn if assistant tried to use different project
+      if (providedProjectId && providedProjectId !== configuredProjectId && !allowOverride) {
+        logger.warn('Project ID override attempt blocked', {
+          configuredProject: configuredProjectId,
+          attemptedProject: providedProjectId,
+          message: 'Using configured project ID to enforce data isolation'
+        });
+      }
+      
+      return configuredProjectId;
     }
     
-    return projectId;
+    // No configured project ID - require it in request for multi-project scenarios
+    if (!providedProjectId) {
+      throw new Error(
+        'Project ID is required. Either:\n' +
+        '1. Set PROJECT_ID in environment/config for single-project mode (recommended)\n' +
+        '2. Provide projectId parameter in each request for multi-project access'
+      );
+    }
+    
+    return providedProjectId;
   }
 
   private async initializeDynamicConfig(): Promise<void> {
@@ -866,11 +900,11 @@ export class YouTrackMCPServer {
     const needsProjectId = ['get', 'validate', 'fields', 'status'];
     if (needsProjectId.includes(action)) {
       try {
-        ParameterValidator.validateProjectId(projectId || this.resolveProjectId(), 'projectId');
+        ParameterValidator.validateProjectId(this.resolveProjectId(projectId), 'projectId');
       } catch (error) {
         logger.error('Project validation failed', { 
           action, 
-          projectId: projectId || this.resolveProjectId(), 
+          projectId: this.resolveProjectId(projectId), 
           error: error instanceof Error ? error.message : error 
         });
         throw new McpError(
@@ -884,13 +918,13 @@ export class YouTrackMCPServer {
       case 'list':
         return await client.projects.listProjects(fields);
       case 'get':
-        return await client.projects.getProject(projectId || this.resolveProjectId());
+        return await client.projects.getProject(this.resolveProjectId(projectId));
       case 'validate':
-        return await client.projects.validateProject(projectId || this.resolveProjectId());
+        return await client.projects.validateProject(this.resolveProjectId(projectId));
       case 'fields':
-        return await client.projects.getProjectCustomFields(projectId || this.resolveProjectId());
+        return await client.projects.getProjectCustomFields(this.resolveProjectId(projectId));
       case 'status':
-        return await client.projects.getProjectStatistics(projectId || this.resolveProjectId());
+        return await client.projects.getProjectStatistics(this.resolveProjectId(projectId));
       default:
         throw new Error(`Unknown projects action: ${action}`);
     }
@@ -904,7 +938,7 @@ export class YouTrackMCPServer {
     try {
       switch (action) {
         case 'create':
-          ParameterValidator.validateProjectId(projectId || this.resolveProjectId(), 'projectId');
+          ParameterValidator.validateProjectId(this.resolveProjectId(projectId), 'projectId');
           ParameterValidator.validateRequired(summary, 'summary');
           break;
         case 'get_field_values':
@@ -955,7 +989,7 @@ export class YouTrackMCPServer {
     
     switch (action) {
       case 'create':
-        return await client.issues.createIssue(projectId || this.resolveProjectId(), { 
+        return await client.issues.createIssue(this.resolveProjectId(projectId), { 
           summary, description, priority, assignee, type 
         });
       case 'update':
@@ -995,8 +1029,27 @@ export class YouTrackMCPServer {
 
   private async handleQueryIssues(client: any, args: any) {
     const { query, fields, limit } = args;
+    
+    // Enforce project scoping
+    const projectId = this.resolveProjectId(undefined);
+    let scopedQuery = query;
+    
+    if (projectId) {
+      // Add project filter to query if not already present
+      if (!query.toLowerCase().includes('project:')) {
+        scopedQuery = `project: ${projectId} ${query}`;
+      } else if (this.config.get().defaultProjectId) {
+        // If config has PROJECT_ID set, enforce it by replacing any project: clause
+        logger.warn('Query contains project filter but PROJECT_ID is configured - enforcing config project', {
+          configuredProject: this.config.get().defaultProjectId,
+          originalQuery: query
+        });
+        scopedQuery = query.replace(/project:\s*\S+/i, `project: ${projectId}`);
+      }
+    }
+    
     return await client.issues.queryIssues({ 
-      query, 
+      query: scopedQuery, 
       fields: fields ? fields.split(',') : ['id', 'summary', 'description', 'state', 'priority', 'reporter', 'assignee'],
       limit: limit || 50
     });
@@ -1090,12 +1143,15 @@ export class YouTrackMCPServer {
     
     switch (action) {
       case 'list':
-        return await client.knowledgeBase.listArticles(false, projectId);
+        return await client.knowledgeBase.listArticles({ 
+          project: this.resolveProjectId(projectId),
+          includeContent: false 
+        });
       case 'get':
         return await client.knowledgeBase.getArticle(articleId, false);
       case 'create':
         // Resolve projectId from args or environment variable
-        const resolvedProjectId = projectId || this.resolveProjectId();
+        const resolvedProjectId = this.resolveProjectId(projectId);
         return await client.knowledgeBase.createArticle({ 
           title, 
           content, 
@@ -1108,7 +1164,12 @@ export class YouTrackMCPServer {
       case 'delete':
         return await client.knowledgeBase.deleteArticle(articleId);
       case 'search':
-        return await client.knowledgeBase.searchArticles(searchTerm, false, projectId, tags);
+        return await client.knowledgeBase.searchArticles({
+          query: searchTerm,
+          tags,
+          project: this.resolveProjectId(projectId),
+          includeContent: false
+        });
       case 'link_sub_article':
         if (!parentArticleId || !childArticleId) {
           throw new Error('Both parentArticleId and childArticleId are required for link_sub_article action');
@@ -1147,13 +1208,13 @@ export class YouTrackMCPServer {
     const needsProjectId = ['project_stats', 'gantt', 'critical_path', 'resource_allocation'];
     if (needsProjectId.includes(reportType)) {
       try {
-        const validatedProjectId = ParameterValidator.validateProjectId(projectId || this.resolveProjectId(), 'projectId');
+        const validatedProjectId = ParameterValidator.validateProjectId(this.resolveProjectId(projectId), 'projectId');
         // Verify project exists before using it
         await client.projects.validateProject(validatedProjectId);
       } catch (error) {
         logger.error('Analytics project validation failed', { 
           reportType, 
-          projectId: projectId || this.resolveProjectId(), 
+          projectId: this.resolveProjectId(projectId), 
           error: error instanceof Error ? error.message : error 
         });
         throw new McpError(
@@ -1173,21 +1234,21 @@ export class YouTrackMCPServer {
     
     switch (reportType) {
       case 'project_stats':
-        return await client.projects.getProjectStatistics(projectId || this.resolveProjectId(), startDate, endDate, true);
+        return await client.projects.getProjectStatistics(this.resolveProjectId(projectId), startDate, endDate, true);
       case 'time_tracking':
         return await client.admin.getTimeTrackingReport(startDate, endDate, 'user', projectId, userId);
       case 'gantt':
         return await client.admin.generateGanttChart(
-          projectId || this.resolveProjectId(), 
+          this.resolveProjectId(projectId), 
           includeDependencies || false,
           includeSprints || false,
           sprintId,
           includeWorkItems || false
         );
       case 'critical_path':
-        return await client.admin.getCriticalPath(projectId || this.resolveProjectId());
+        return await client.admin.getCriticalPath(this.resolveProjectId(projectId));
       case 'resource_allocation':
-        return await client.admin.getResourceAllocation(projectId || this.resolveProjectId(), startDate, endDate);
+        return await client.admin.getResourceAllocation(this.resolveProjectId(projectId), startDate, endDate);
       case 'milestone_progress':
         return await client.admin.getMilestoneProgress(milestoneId);
       default:
@@ -1202,9 +1263,9 @@ export class YouTrackMCPServer {
       case 'search_users':
         return await client.admin.searchUsers(query);
       case 'project_fields':
-        return await client.projects.getProjectCustomFields(projectId || this.resolveProjectId());
+        return await client.projects.getProjectCustomFields(this.resolveProjectId(projectId));
       case 'field_values':
-        return await client.projects.getProjectFieldValues(projectId || this.resolveProjectId(), fieldName);
+        return await client.projects.getProjectFieldValues(this.resolveProjectId(projectId), fieldName);
       case 'bulk_update':
         return await client.admin.bulkUpdateIssues(issueIds, updates);
       case 'dependencies':
