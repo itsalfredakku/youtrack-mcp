@@ -137,6 +137,23 @@ VSCode (`.vscode/settings.json`):
   } 
 }
 ```
+Github Coding Agent:
+```json
+ "mcpServers": {
+    "youtrack": {      
+       "type": "sse",
+        "url": "https://youtrack-mcp.you.com/mcp/sse",
+        "headers": {
+            "Authorization": "Bearer jTJrRDGhhJ!b8rD"
+            },
+      "tools": [
+        "issues",
+        "projects",
+        "users"        
+      ]
+    }
+}
+```
 Continue.dev (`continue.json`):
 ```json
 { 
