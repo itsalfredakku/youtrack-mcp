@@ -2,6 +2,7 @@ import { BaseAPIClient } from '../base/base-client.js';
 import { ResponseFormatter, type MCPResponse } from '../base/response-formatter.js';
 import { logger } from '../../logger.js';
 import { sanitizeDescription, sanitizeComment } from '../../utils/text-sanitizer.js';
+import { IssueFields } from '../field-configurations.js';
 
 export interface IssueCreateParams {
   summary: string;
@@ -120,18 +121,9 @@ export class IssuesAPIClient extends BaseAPIClient {
     try {
       const endpoint = `/issues/${issueId}`;
       
-      // Default to comprehensive fields if not specified
-      const defaultFields = 'id,idReadable,summary,description,created,updated,resolved,' +
-        'reporter(login,fullName,email),' +
-        'updater(login,fullName),' +
-        'project(id,name,shortName),' +
-        'customFields(id,name,value(id,name,isResolved,minutes,presentation)),' +
-        'tags(id,name),' +
-        'comments(id,text,created,author(login,fullName)),' +
-        'attachments(id,name,size,mimeType)';
-      
+      // Use detailed fields for single issue fetch
       const response = await this.get(endpoint, {
-        fields: fields || defaultFields
+        fields: fields || IssueFields.DETAIL
       });
       
       return ResponseFormatter.formatSuccess(response.data, `Retrieved issue ${issueId}`);
@@ -250,7 +242,7 @@ export class IssuesAPIClient extends BaseAPIClient {
       
       const queryParams = {
         query: params.query,
-        fields: params.fields || 'id,idReadable,summary,description,customFields(name,value(name)),created,updated',
+        fields: params.fields || IssueFields.SEARCH, // Use optimized search fields
         $top: params.limit || 50,
         $skip: params.skip || 0
       };
@@ -1013,6 +1005,29 @@ export class IssuesAPIClient extends BaseAPIClient {
       return ResponseFormatter.formatError(
         `Failed to toggle star: ${error.message}`,
         { issueId, action: 'toggle_star' }
+      );
+    }
+  }
+
+  /**
+   * Get count of issues matching query
+   * 
+   * @param query - Issue search query
+   * @returns Count of matching issues
+   */
+  async getIssueCount(query: string): Promise<MCPResponse> {
+    try {
+      const response = await this.post('/issuesGetter/count', { query });
+      const count = response.data?.count ?? 0;
+      
+      return ResponseFormatter.formatSuccess(
+        { count, query },
+        `Found ${count} issues matching query`
+      );
+    } catch (error: any) {
+      return ResponseFormatter.formatError(
+        `Failed to get issue count: ${error.message}`,
+        { query }
       );
     }
   }

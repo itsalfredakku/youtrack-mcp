@@ -55,7 +55,11 @@ curl http://localhost:3001/health
 | Domain | Capabilities |
 |--------|--------------|
 | **Dynamic Configuration** | 🆕 Auto-loads custom field values (State, Priority, Type) from YOUR YouTrack instance on startup - no more hardcoded examples! |
-| Issues | CRUD, comments, transitions, dependency links, estimation |
+| Issues | CRUD, comments, transitions, dependency links, estimation, **count queries** |
+| **Issue History** | 🆕 Activity tracking, audit trail, change history with filtering |
+| **Bulk Operations** | 🆕 Apply commands to multiple issues, silent execution, auto-completion |
+| **Search Enhancement** | 🆕 Query auto-completion, context-aware suggestions |
+| **Saved Queries** | 🆕 Create, manage, and share saved searches |
 | Agile  | Sprint create/manage, issue assignment, progress metrics |
 | Knowledge Base | Article create/update/search, tagging, linkage |
 | Projects | Discovery, metadata, field summaries |
@@ -63,6 +67,7 @@ curl http://localhost:3001/health
 | Time Tracking | Log work, time summaries, reporting hooks |
 | Performance | TTL caching, structured logging, graceful fallbacks |
 | Reliability | Consistent response envelope & error normalization |
+| **API Coverage** | 🆕 **~80%** of YouTrack REST API (12 of 15 domain areas) |
 
 ### 🌟 New: Dynamic Configuration
 
@@ -196,15 +201,27 @@ Pitfalls: absolute path, no trailing slash, full token copy, JSON env values are
 ---
 
 ## Tool Catalog Summary
-| Category | Examples |
-|----------|----------|
-| Issues | `create_issue`, `update_issue`, `add_issue_comment`, `search_issues` |
-| State | `start_working_on_issue`, `change_issue_state`, `complete_issue` |
-| Agile | `create_sprint`, `list_sprints`, `assign_issue_to_sprint` |
-| Knowledge | `create_article`, `update_article`, `search_articles` |
-| Projects | `list_projects`, `get_project_details` |
-| Analytics | `generate_gantt_chart`, `get_critical_path`, `create_issue_dependency` |
-| Time | `log_work_item`, `get_time_report` |
+**17 MCP Tools** covering 12 domain areas:
+
+| Category | Tools & Key Actions |
+|----------|---------------------|
+| **Issues** | `issues` - create, update, comment, search, query, **count**, state transitions |
+| **Issue History** 🆕 | `activities` - global/issue activity tracking, audit trail, paginated history |
+| **Bulk Operations** 🆕 | `commands` - apply commands to multiple issues, get suggestions, silent execution |
+| **Search** 🆕 | `search_assist` - query auto-completion, context-aware suggestions |
+| **Saved Searches** 🆕 | `saved_queries` - create, list, update, delete saved queries |
+| **Agile Boards** | `agile_boards` - list boards/sprints, assign issues, track progress |
+| **Knowledge Base** | `knowledge_base` - create/update articles, search, manage hierarchy |
+| **Projects** | `projects` - list, get details, validate access, custom fields |
+| **Users & Groups** | `users` - list/search users, groups, team management |
+| **Time Tracking** | `time_tracking` - log work, get entries, reports |
+| **Analytics** | `analytics` - Gantt charts, critical path, resource allocation |
+| **Custom Fields** | `custom_fields` - manage fields, bundles, project fields |
+| **Comments** | `comments` - add, update, delete issue comments |
+| **Subscriptions** | `subscriptions` - manage notification preferences |
+| **Auth** | `auth` - OAuth2 status, login, token validation |
+
+See [Tool Reference](docs/TOOL_REFERENCE.md) for complete documentation.
 
 ---
 

@@ -1,5 +1,6 @@
 import { BaseAPIClient, MCPResponse } from '../base/base-client.js';
 import { ResponseFormatter } from '../base/response-formatter.js';
+import { ProjectFields } from '../field-configurations.js';
 
 export interface ProjectTimeTrackingSettings {
   enabled: boolean;
@@ -35,11 +36,11 @@ export class ProjectsAPIClient extends BaseAPIClient {
   /**
    * List all accessible projects
    */
-  async listProjects(fields: string = 'id,name,shortName,description'): Promise<MCPResponse> {
+  async listProjects(fields?: string): Promise<MCPResponse> {
     try {
       // Use the correct endpoint from OpenAPI spec
       const params = {
-        fields,
+        fields: fields || ProjectFields.LIST, // Use optimized list fields
         $top: 1000,
         $skip: 0
       } as any;
@@ -86,7 +87,7 @@ export class ProjectsAPIClient extends BaseAPIClient {
   async getProject(projectId: string, fields?: string): Promise<MCPResponse> {
     const endpoint = `/admin/projects/${projectId}`;
     const params = {
-      fields: fields || 'id,name,shortName,description,archived,leader(login,name),created,customFields(field(name,fieldType(presentation)))'
+      fields: fields || ProjectFields.DETAIL // Use detailed fields
     };
 
     const response = await this.get(endpoint, params);

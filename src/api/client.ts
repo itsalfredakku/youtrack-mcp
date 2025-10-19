@@ -7,6 +7,10 @@ import { ProjectsAPIClient } from './domains/projects-api.js';
 import { KnowledgeBaseAPIClient } from './domains/knowledge-base-api.js';
 import { UsersAPIClient } from './domains/users-api.js';
 import { CustomFieldsAPIClient } from './domains/custom-fields-api.js';
+import { ActivitiesAPIClient } from './domains/activities-api.js';
+import { CommandsAPIClient } from './domains/commands-api.js';
+import { SearchAssistAPIClient } from './domains/search-assist-api.js';
+import { SavedQueriesAPIClient } from './domains/saved-queries-api.js';
 
 export interface IYouTrackClient {
   issues: IssuesAPIClient;
@@ -17,6 +21,10 @@ export interface IYouTrackClient {
   knowledgeBase: KnowledgeBaseAPIClient;
   users: UsersAPIClient;
   customFields: CustomFieldsAPIClient;
+  activities: ActivitiesAPIClient;
+  commands: CommandsAPIClient;
+  searchAssist: SearchAssistAPIClient;
+  savedQueries: SavedQueriesAPIClient;
   
   // Health and diagnostics
   getHealth(): {
@@ -46,6 +54,10 @@ export class YouTrackClient implements IYouTrackClient {
   knowledgeBase: KnowledgeBaseAPIClient;
   users: UsersAPIClient;
   customFields: CustomFieldsAPIClient;
+  activities: ActivitiesAPIClient;
+  commands: CommandsAPIClient;
+  searchAssist: SearchAssistAPIClient;
+  savedQueries: SavedQueriesAPIClient;
 
   constructor(config: YouTrackConfig) {
     this.issues = new IssuesAPIClient(config);
@@ -56,6 +68,10 @@ export class YouTrackClient implements IYouTrackClient {
     this.knowledgeBase = new KnowledgeBaseAPIClient(config);
     this.users = new UsersAPIClient(config);
     this.customFields = new CustomFieldsAPIClient(config);
+    this.activities = new ActivitiesAPIClient(config);
+    this.commands = new CommandsAPIClient(config);
+    this.searchAssist = new SearchAssistAPIClient(config);
+    this.savedQueries = new SavedQueriesAPIClient(config);
   }
 
   getHealth(): {
@@ -85,7 +101,18 @@ export class YouTrackClient implements IYouTrackClient {
 
   clearAllCaches(): void {
     // Clear caches from all domain clients
-    // Implementation depends on caching strategy
+    this.issues.clearCache?.();
+    this.agile.clearCache?.();
+    this.workItems.clearCache?.();
+    this.admin.clearCache?.();
+    this.projects.clearCache?.();
+    this.knowledgeBase.clearCache?.();
+    this.users.clearCache?.();
+    this.customFields.clearCache?.();
+    this.activities.clearCache?.();
+    this.commands.clearCache?.();
+    this.searchAssist.clearCache?.();
+    this.savedQueries.clearCache?.();
   }
 }
 

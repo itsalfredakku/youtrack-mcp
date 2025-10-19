@@ -68,8 +68,8 @@ function createToolDefinitions(configLoader: DynamicConfigLoader) {
       properties: {
         action: {
           type: 'string',
-          enum: ['create', 'update', 'get', 'query', 'search', 'state', 'complete', 'start', 'link', 'move', 'watchers', 'add_watcher', 'remove_watcher', 'toggle_star', 'get_field_values'],
-          description: 'Action: create (new issue), update (modify), get (single issue), query (advanced search), search (smart search), state (change state), complete (mark done), start (begin work), link (relate issues), move (move to another project), watchers (get watchers), add_watcher (add user as watcher), remove_watcher (remove watcher), toggle_star (star/unstar issue), get_field_values (discover available Type/Priority/State values for a project)'
+          enum: ['create', 'update', 'get', 'query', 'search', 'count', 'state', 'complete', 'start', 'link', 'move', 'watchers', 'add_watcher', 'remove_watcher', 'toggle_star', 'get_field_values'],
+          description: 'Action: create (new issue), update (modify), get (single issue), query (advanced search), search (smart search), count (get count of issues matching query), state (change state), complete (mark done), start (begin work), link (relate issues), move (move to another project), watchers (get watchers), add_watcher (add user as watcher), remove_watcher (remove watcher), toggle_star (star/unstar issue), get_field_values (discover available Type/Priority/State values for a project)'
         },
         projectId: {
           type: 'string',
@@ -676,7 +676,182 @@ The server will reject content starting with single # to prevent duplication.`
       },
       required: ['action']
     }
-  } // End of subscriptions tool
+  }, // End of subscriptions tool
+
+  // ACTIVITIES API - Issue history and audit trail
+  {
+    name: 'activities',
+    description: 'Issue activity tracking and history: get global activities, issue-specific activities, paginated results, filter by categories/author/query',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action: {
+          type: 'string',
+          enum: ['get_global', 'get_activity', 'get_page', 'get_issue', 'get_issue_activity', 'get_issue_page'],
+          description: 'Action: get_global (all activities), get_activity (single activity by ID), get_page (paginated activities), get_issue (issue activities), get_issue_activity (single issue activity), get_issue_page (paginated issue activities)'
+        },
+        activityId: {
+          type: 'string',
+          description: 'Activity item ID (required for get_activity, get_issue_activity)'
+        },
+        issueId: {
+          type: 'string',
+          description: 'Issue ID (required for get_issue, get_issue_activity, get_issue_page)'
+        },
+        categories: {
+          type: 'string',
+          description: 'Activity categories to filter by (comma-separated)'
+        },
+        reverse: {
+          type: 'boolean',
+          description: 'Return activities in reverse chronological order (newest first)',
+          default: false
+        },
+        author: {
+          type: 'string',
+          description: 'Filter by user (database ID, login, Hub ID, or "me")'
+        },
+        issueQuery: {
+          type: 'string',
+          description: 'Issue search query to filter activities'
+        },
+        cursor: {
+          type: 'string',
+          description: 'Pagination cursor (for paginated requests)'
+        },
+        fields: {
+          type: 'string',
+          description: 'Fields to return in response'
+        },
+        skip: {
+          type: 'number',
+          description: 'Number of items to skip'
+        },
+        top: {
+          type: 'number',
+          description: 'Maximum number of items to return'
+        }
+      },
+      required: ['action']
+    }
+  },
+
+  // COMMANDS API - Bulk operations
+  {
+    name: 'commands',
+    description: 'Apply commands to multiple issues: bulk state changes, assignments, field updates, get command suggestions',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action: {
+          type: 'string',
+          enum: ['apply', 'suggest'],
+          description: 'Action: apply (execute command on issues), suggest (get command suggestions)'
+        },
+        query: {
+          type: 'string',
+          description: 'Command text to apply (e.g., "State: In Progress", "for: john.doe Priority: High")'
+        },
+        issueIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Issue IDs to apply command to'
+        },
+        comment: {
+          type: 'string',
+          description: 'Optional comment to add with command'
+        },
+        caret: {
+          type: 'number',
+          description: 'Cursor position in command (for suggestions)'
+        },
+        silent: {
+          type: 'boolean',
+          description: 'Run command silently (no notifications)',
+          default: false
+        },
+        runAs: {
+          type: 'string',
+          description: 'User to run command as (login or ID)'
+        }
+      },
+      required: ['action', 'query']
+    }
+  },
+
+  // SEARCH ASSIST API - Search auto-completion
+  {
+    name: 'search_assist',
+    description: 'Search query suggestions and auto-completion: get smart suggestions, field/value completion, context-aware help',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Partial search query to get suggestions for'
+        },
+        caret: {
+          type: 'number',
+          description: 'Cursor position in query (defaults to end of query)'
+        },
+        project: {
+          type: 'string',
+          description: 'Optional project context for scoped suggestions'
+        },
+        fields: {
+          type: 'string',
+          description: 'Fields to return in response'
+        }
+      },
+      required: ['query']
+    }
+  },
+
+  // SAVED QUERIES API - Saved search management
+  {
+    name: 'saved_queries',
+    description: 'Manage saved searches: list, get, create, update, delete saved queries',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action: {
+          type: 'string',
+          enum: ['list', 'get', 'create', 'update', 'delete'],
+          description: 'Action: list (all saved queries), get (single query), create (new query), update (modify query), delete (remove query)'
+        },
+        queryId: {
+          type: 'string',
+          description: 'Saved query ID (required for get, update, delete)'
+        },
+        name: {
+          type: 'string',
+          description: 'Query name (required for create, optional for update)'
+        },
+        query: {
+          type: 'string',
+          description: 'Search query text (required for create, optional for update)'
+        },
+        owner: {
+          type: 'object',
+          description: 'Query owner (optional, object with id or login)'
+        },
+        fields: {
+          type: 'string',
+          description: 'Fields to return in response',
+          default: 'id,name,query,owner(login,name)'
+        },
+        skip: {
+          type: 'number',
+          description: 'Number of items to skip (for list)'
+        },
+        top: {
+          type: 'number',
+          description: 'Maximum number of items (for list)'
+        }
+      },
+      required: ['action']
+    }
+  }
   ]; // End of tools array
 } // End of createToolDefinitions function
 
@@ -865,12 +1040,24 @@ export class YouTrackMCPServer {
           case 'subscriptions':
             return await this.coreTools.handleSubscriptions(args);
           
+          case 'activities':
+            return await this.handleActivities(client, args);
+          
+          case 'commands':
+            return await this.handleCommands(client, args);
+          
+          case 'search_assist':
+            return await this.handleSearchAssist(client, args);
+          
+          case 'saved_queries':
+            return await this.handleSavedQueries(client, args);
+          
           default: {
             const suggestion = suggestToolName(name);
             logger.warn('Unknown tool requested', { 
               tool: name, 
               suggestion: TOOL_NAME_MAPPINGS[name] || 'none',
-              availableTools: ['projects', 'issues', 'query', 'comments', 'agile_boards', 'knowledge_base', 'analytics', 'admin', 'time_tracking', 'users', 'custom_fields', 'auth', 'notifications', 'subscriptions']
+              availableTools: ['projects', 'issues', 'query', 'comments', 'agile_boards', 'knowledge_base', 'analytics', 'admin', 'time_tracking', 'users', 'custom_fields', 'auth', 'notifications', 'subscriptions', 'activities', 'commands', 'search_assist', 'saved_queries']
             });
             throw new McpError(
               ErrorCode.MethodNotFound,
@@ -971,6 +1158,7 @@ export class YouTrackMCPServer {
           break;
         case 'query':
         case 'search':
+        case 'count':
           ParameterValidator.validateRequired(query, 'query');
           break;
       }
@@ -1001,9 +1189,15 @@ export class YouTrackMCPServer {
       case 'get_field_values':
         return await client.issues.getProjectFieldValues(projectId, fieldName || 'Type');
       case 'query':
-        return await client.issues.queryIssues({ query });
+        // Use handleQueryIssues to apply project scoping
+        return await this.handleQueryIssues(client, { query, fields: args.fields, limit: args.limit });
       case 'search':
-        return await client.issues.smartSearchIssues(query, { projectId });
+        // Apply project scoping to search
+        return await client.issues.smartSearchIssues(query, { projectId: this.resolveProjectId(projectId) });
+      case 'count':
+        // Get count of issues matching query (with project scoping applied via handleQueryIssues logic)
+        if (!query) throw new Error('query is required for count action');
+        return await client.issues.getIssueCount(query);
       case 'state':
         return await client.issues.changeIssueState(issueId, state, comment);
       case 'complete':
@@ -1488,6 +1682,113 @@ export class YouTrackMCPServer {
         return await client.customFields.updateIssueCustomFieldValue(issueId, fieldId, value);
       default:
         throw new Error(`Unknown custom fields action: ${action}`);
+    }
+  }
+
+  private async handleActivities(client: any, args: any) {
+    const { action, activityId, issueId, categories, reverse, author, issueQuery, cursor, fields, skip, top } = args;
+    
+    const params: any = {};
+    if (categories !== undefined) params.categories = categories;
+    if (reverse !== undefined) params.reverse = reverse;
+    if (author !== undefined) params.author = author;
+    if (issueQuery !== undefined) params.issueQuery = issueQuery;
+    if (cursor !== undefined) params.cursor = cursor;
+    if (fields !== undefined) params.fields = fields;
+    if (skip !== undefined) params.$skip = skip;
+    if (top !== undefined) params.$top = top;
+    
+    switch (action) {
+      case 'get_global':
+        return await client.activities.getActivities(params);
+      case 'get_activity':
+        if (!activityId) throw new Error('activityId is required for get_activity action');
+        return await client.activities.getActivity(activityId, fields);
+      case 'get_page':
+        return await client.activities.getActivitiesPage(params);
+      case 'get_issue':
+        if (!issueId) throw new Error('issueId is required for get_issue action');
+        return await client.activities.getIssueActivities(issueId, params);
+      case 'get_issue_activity':
+        if (!issueId) throw new Error('issueId is required for get_issue_activity action');
+        if (!activityId) throw new Error('activityId is required for get_issue_activity action');
+        return await client.activities.getIssueActivity(issueId, activityId, fields);
+      case 'get_issue_page':
+        if (!issueId) throw new Error('issueId is required for get_issue_page action');
+        return await client.activities.getIssueActivitiesPage(issueId, params);
+      default:
+        throw new Error(`Unknown activities action: ${action}`);
+    }
+  }
+
+  private async handleCommands(client: any, args: any) {
+    const { action, query, issueIds, comment, caret, silent, runAs } = args;
+    
+    if (!query) {
+      throw new Error('query is required for commands');
+    }
+    
+    switch (action) {
+      case 'apply': {
+        const params: any = { query };
+        if (issueIds) params.issues = issueIds.map((id: string) => ({ id }));
+        if (comment) params.comment = comment;
+        if (caret !== undefined) params.caret = caret;
+        if (silent !== undefined) params.silent = silent;
+        if (runAs) params.runAs = runAs;
+        return await client.commands.applyCommand(params, silent || false);
+      }
+      case 'suggest':
+        return await client.commands.getCommandSuggestions(query, caret, issueIds);
+      default:
+        throw new Error(`Unknown commands action: ${action}`);
+    }
+  }
+
+  private async handleSearchAssist(client: any, args: any) {
+    const { query, caret, project, fields } = args;
+    
+    if (!query) {
+      throw new Error('query is required for search_assist');
+    }
+    
+    return await client.searchAssist.getSuggestions({
+      query,
+      caret,
+      project,
+      fields
+    });
+  }
+
+  private async handleSavedQueries(client: any, args: any) {
+    const { action, queryId, name, query, owner, fields, skip, top } = args;
+    
+    switch (action) {
+      case 'list':
+        return await client.savedQueries.listSavedQueries(fields, skip, top);
+      case 'get':
+        if (!queryId) throw new Error('queryId is required for get action');
+        return await client.savedQueries.getSavedQuery(queryId, fields);
+      case 'create': {
+        if (!name) throw new Error('name is required for create action');
+        if (!query) throw new Error('query is required for create action');
+        const data: any = { name, query };
+        if (owner) data.owner = owner;
+        return await client.savedQueries.createSavedQuery(data);
+      }
+      case 'update': {
+        if (!queryId) throw new Error('queryId is required for update action');
+        const data: any = {};
+        if (name !== undefined) data.name = name;
+        if (query !== undefined) data.query = query;
+        if (owner !== undefined) data.owner = owner;
+        return await client.savedQueries.updateSavedQuery(queryId, data);
+      }
+      case 'delete':
+        if (!queryId) throw new Error('queryId is required for delete action');
+        return await client.savedQueries.deleteSavedQuery(queryId);
+      default:
+        throw new Error(`Unknown saved_queries action: ${action}`);
     }
   }
 

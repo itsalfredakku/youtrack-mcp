@@ -1326,13 +1326,392 @@ Common error codes:
 
 ---
 
+## Activities Tools
+
+### `activities`
+
+Track and retrieve issue activity history and audit trails.
+
+#### Actions
+
+##### `get_global` - Get All Activities
+
+Retrieve global activities across all issues.
+
+**Parameters**:
+- `categories` (string, optional) - Activity categories to filter by
+- `reverse` (boolean, optional) - Return in reverse chronological order (default: false)
+- `author` (string, optional) - Filter by user (ID, login, Hub ID, or "me")
+- `issueQuery` (string, optional) - Issue search query to filter activities
+- `fields` (string, optional) - Fields to return
+- `skip` (number, optional) - Number of items to skip
+- `top` (number, optional) - Maximum number of items
+
+**Example**:
+```json
+{
+  "action": "get_global",
+  "author": "me",
+  "reverse": true,
+  "top": 50
+}
+```
+
+##### `get_activity` - Get Single Activity
+
+Get a specific activity by ID.
+
+**Parameters**:
+- `activityId` (string, required) - Activity item ID
+- `fields` (string, optional) - Fields to return
+
+**Example**:
+```json
+{
+  "action": "get_activity",
+  "activityId": "123-456"
+}
+```
+
+##### `get_page` - Get Paginated Activities
+
+Get paginated activities with cursor support for large datasets.
+
+**Parameters**:
+- `cursor` (string, optional) - Pagination cursor
+- `categories` (string, optional) - Activity categories
+- `reverse` (boolean, optional) - Reverse order
+- `author` (string, optional) - Filter by user
+- `issueQuery` (string, optional) - Issue query filter
+- `fields` (string, optional) - Fields to return
+
+**Example**:
+```json
+{
+  "action": "get_page",
+  "reverse": true,
+  "top": 100
+}
+```
+
+##### `get_issue` - Get Issue Activities
+
+Get all activities for a specific issue.
+
+**Parameters**:
+- `issueId` (string, required) - Issue ID
+- `categories` (string, optional) - Activity categories
+- `reverse` (boolean, optional) - Reverse order
+- `author` (string, optional) - Filter by user
+- `fields` (string, optional) - Fields to return
+- `skip` (number, optional) - Skip items
+- `top` (number, optional) - Max items
+
+**Example**:
+```json
+{
+  "action": "get_issue",
+  "issueId": "TEST-123",
+  "reverse": true,
+  "top": 50
+}
+```
+
+##### `get_issue_activity` - Get Single Issue Activity
+
+Get a specific activity for an issue.
+
+**Parameters**:
+- `issueId` (string, required) - Issue ID
+- `activityId` (string, required) - Activity ID
+- `fields` (string, optional) - Fields to return
+
+**Example**:
+```json
+{
+  "action": "get_issue_activity",
+  "issueId": "TEST-123",
+  "activityId": "456-789"
+}
+```
+
+##### `get_issue_page` - Get Paginated Issue Activities
+
+Get paginated activities for an issue with cursor support.
+
+**Parameters**:
+- `issueId` (string, required) - Issue ID
+- `cursor` (string, optional) - Pagination cursor
+- `categories` (string, optional) - Activity categories
+- `reverse` (boolean, optional) - Reverse order
+- `fields` (string, optional) - Fields to return
+
+**Example**:
+```json
+{
+  "action": "get_issue_page",
+  "issueId": "TEST-123",
+  "reverse": true
+}
+```
+
+---
+
+## Commands Tools
+
+### `commands`
+
+Apply commands to multiple issues for bulk operations.
+
+#### Actions
+
+##### `apply` - Apply Command to Issues
+
+Execute a command on one or more issues.
+
+**Parameters**:
+- `query` (string, required) - Command text (e.g., "State: In Progress", "for: john.doe Priority: High")
+- `issueIds` (array, optional) - Array of issue IDs to apply command to
+- `comment` (string, optional) - Comment to add with command
+- `caret` (number, optional) - Cursor position in command
+- `silent` (boolean, optional) - Run silently without notifications (default: false)
+- `runAs` (string, optional) - User to run command as (login or ID)
+
+**Example - Bulk State Change**:
+```json
+{
+  "action": "apply",
+  "query": "State: In Progress",
+  "issueIds": ["TEST-1", "TEST-2", "TEST-3"],
+  "silent": false
+}
+```
+
+**Example - Bulk Assignment with Priority**:
+```json
+{
+  "action": "apply",
+  "query": "for: john.doe Priority: Critical",
+  "issueIds": ["TEST-10", "TEST-11"],
+  "comment": "Assigning critical bugs to John"
+}
+```
+
+**Example - Complex Command**:
+```json
+{
+  "action": "apply",
+  "query": "State: Resolved Fixed in build: 1.2.3 for: qa-team",
+  "issueIds": ["BUG-100", "BUG-101"],
+  "silent": true
+}
+```
+
+##### `suggest` - Get Command Suggestions
+
+Get auto-complete suggestions for a command.
+
+**Parameters**:
+- `query` (string, required) - Partial command text
+- `caret` (number, optional) - Cursor position (defaults to end)
+- `issueIds` (array, optional) - Issue context for suggestions
+
+**Example**:
+```json
+{
+  "action": "suggest",
+  "query": "State: ",
+  "caret": 7,
+  "issueIds": ["TEST-1"]
+}
+```
+
+---
+
+## Search Assist Tools
+
+### `search_assist`
+
+Get search query suggestions and auto-completion.
+
+**Parameters**:
+- `query` (string, required) - Partial search query
+- `caret` (number, optional) - Cursor position (defaults to end of query)
+- `project` (string, optional) - Project context for scoped suggestions
+- `fields` (string, optional) - Fields to return
+
+**Example - Basic Auto-complete**:
+```json
+{
+  "query": "state: ",
+  "caret": 7
+}
+```
+
+**Example - Project-scoped Suggestions**:
+```json
+{
+  "query": "priority: #",
+  "project": "TEST"
+}
+```
+
+**Example - Field Name Suggestions**:
+```json
+{
+  "query": "cust",
+  "caret": 4
+}
+```
+
+**Response** includes:
+- Suggested completions
+- Field names
+- Possible values
+- Syntax help
+
+---
+
+## Saved Queries Tools
+
+### `saved_queries`
+
+Manage saved searches for quick access to common queries.
+
+#### Actions
+
+##### `list` - List All Saved Queries
+
+Get all saved queries available to the user.
+
+**Parameters**:
+- `fields` (string, optional) - Fields to return (default: "id,name,query,owner(login,name)")
+- `skip` (number, optional) - Number to skip
+- `top` (number, optional) - Maximum number
+
+**Example**:
+```json
+{
+  "action": "list",
+  "top": 50
+}
+```
+
+##### `get` - Get Single Saved Query
+
+Retrieve a specific saved query by ID.
+
+**Parameters**:
+- `queryId` (string, required) - Saved query ID
+- `fields` (string, optional) - Fields to return
+
+**Example**:
+```json
+{
+  "action": "get",
+  "queryId": "123-456"
+}
+```
+
+##### `create` - Create Saved Query
+
+Create a new saved search.
+
+**Parameters**:
+- `name` (string, required) - Query name
+- `query` (string, required) - Search query text
+- `owner` (object, optional) - Owner (object with id or login)
+
+**Example**:
+```json
+{
+  "action": "create",
+  "name": "My Open Bugs",
+  "query": "project: TEST Type: Bug State: Open"
+}
+```
+
+##### `update` - Update Saved Query
+
+Modify an existing saved query.
+
+**Parameters**:
+- `queryId` (string, required) - Saved query ID
+- `name` (string, optional) - New name
+- `query` (string, optional) - New query text
+- `owner` (object, optional) - New owner
+
+**Example**:
+```json
+{
+  "action": "update",
+  "queryId": "123-456",
+  "name": "My Critical Bugs",
+  "query": "project: TEST Type: Bug Priority: Critical"
+}
+```
+
+##### `delete` - Delete Saved Query
+
+Remove a saved query.
+
+**Parameters**:
+- `queryId` (string, required) - Saved query ID
+
+**Example**:
+```json
+{
+  "action": "delete",
+  "queryId": "123-456"
+}
+```
+
+---
+
+## Issue Count (Enhanced Issues Tool)
+
+The `issues` tool now supports a `count` action to efficiently get issue counts without fetching full results.
+
+### `issues` - count action
+
+Get the number of issues matching a query.
+
+**Parameters**:
+- `action` (string, required) - Must be "count"
+- `query` (string, required) - Issue search query
+
+**Example**:
+```json
+{
+  "action": "count",
+  "query": "project: TEST State: Open"
+}
+```
+
+**Response**:
+```json
+{
+  "count": 42,
+  "query": "project: TEST State: Open"
+}
+```
+
+**Use Cases**:
+- Dashboard metrics
+- Quick statistics
+- Validation before bulk operations
+- Progress tracking
+
+---
+
 ## Related Documentation
 
 - [Getting Started](./GETTING_STARTED.md) - Setup and configuration
 - [Architecture](./ARCHITECTURE.md) - System design
 - [Command Syntax Fix](./COMMAND_SYNTAX_FIX.md) - Recent bug fixes
+- [Missing API Features](../MISSING_API_FEATURES.md) - Implementation details
 - [Contributing](../CONTRIBUTING.md) - How to contribute
 
 ---
 
-**Last Updated**: 2025-01-15
+**Last Updated**: 2025-10-19

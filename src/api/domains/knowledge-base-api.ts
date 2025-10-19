@@ -1,5 +1,6 @@
 import { BaseAPIClient, MCPResponse } from '../base/base-client.js';
 import { ResponseFormatter } from '../base/response-formatter.js';
+import { ArticleFields } from '../field-configurations.js';
 
 export interface ArticleCreateParams {
   title: string;
@@ -121,9 +122,7 @@ export class KnowledgeBaseAPIClient extends BaseAPIClient {
   async getArticle(articleId: string, includeComments: boolean = false): Promise<MCPResponse> {
     const endpoint = `/articles/${articleId}`;
     const params = {
-      fields: includeComments 
-        ? 'id,summary,content,description,created,updated,author(login,name),tags(name),parentArticle(id,summary),childArticles(id,summary),project(shortName,name),comments(id,text,created,author(login,name))'
-        : 'id,summary,content,description,created,updated,author(login,name),tags(name),parentArticle(id,summary),childArticles(id,summary),project(shortName,name)'
+      fields: ArticleFields.DETAIL // Use detailed fields for single article
     };
 
     const response = await this.get(endpoint, params);
@@ -213,9 +212,7 @@ export class KnowledgeBaseAPIClient extends BaseAPIClient {
 
     const queryParams = {
       query: query || '',
-      fields: params.includeContent 
-        ? 'id,summary,content,description,created,updated,author(login,name),tags(name),project(shortName,name)'
-        : 'id,summary,description,created,updated,author(login,name),tags(name),project(shortName,name)',
+      fields: params.includeContent ? ArticleFields.DETAIL : ArticleFields.SEARCH,
       $top: params.limit || 50,
       $skip: params.offset || 0
     };
@@ -253,9 +250,7 @@ export class KnowledgeBaseAPIClient extends BaseAPIClient {
     
     const queryParams = {
       query: params.project ? `project: ${params.project}` : '',
-      fields: params.includeContent 
-        ? 'id,summary,content,description,created,updated,author(login,name),tags(name),project(shortName,name)'
-        : 'id,summary,description,created,updated,author(login,name),tags(name),project(shortName,name)',
+      fields: params.includeContent ? ArticleFields.DETAIL : ArticleFields.LIST,
       $top: params.limit || 100
     };
 
