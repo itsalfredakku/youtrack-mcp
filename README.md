@@ -147,9 +147,9 @@ Github Coding Agent:
  "mcpServers": {
     "youtrack": {      
        "type": "sse",
-        "url": "https://youtrack-mcp.you.com/mcp/sse",
+        "url": "https://your-instance.youtrack.cloud/mcp/sse",
         "headers": {
-            "Authorization": "Bearer jTJrRDGhhJ!b8rD"
+            "Authorization": "Bearer <your-token>"
             },
       "tools": [
         "issues",
