@@ -45,8 +45,8 @@ export class CommandsAPIClient extends BaseAPIClient {
     logger.debug('Applying command to issues', { params, muteNotifications });
     
     const endpoint = muteNotifications 
-      ? '/api/commands?muteUpdateNotifications=true'
-      : '/api/commands';
+      ? '/commands?muteUpdateNotifications=true'
+      : '/commands';
     
     return this.post(endpoint, params);
   }
@@ -64,7 +64,7 @@ export class CommandsAPIClient extends BaseAPIClient {
     
     const issues = issueIds?.map(id => ({ id }));
     
-    return this.post('/api/commands', {
+    return this.post('/commands/assist', {
       query,
       caret: caret ?? query.length,
       issues

@@ -48,74 +48,64 @@ export class ActivitiesAPIClient extends BaseAPIClient {
    * Get global activities across all issues
    * 
    * @param params - Query parameters for filtering activities
-   * @returns List of activity items
+   * @returns Promise resolving to formatted response with activities
    */
-  async getActivities(params: ActivityQueryParams = {}) {
-    logger.debug('Getting global activities', { params });
-    return this.get('/api/activities', { params });
+  async getActivities(params?: ActivityQueryParams) {
+    return this.get('/activities', { params });
   }
 
   /**
    * Get single activity by ID
    * 
-   * @param activityId - Activity item ID
+   * @param activityId - Activity ID
    * @param fields - Fields to return
-   * @returns Single activity item
+   * @returns Promise resolving to formatted response with activity
    */
   async getActivity(activityId: string, fields?: string) {
-    logger.debug('Getting activity by ID', { activityId });
-    return this.get(`/api/activities/${activityId}`, { 
-      params: { fields } 
-    });
+    return this.get(`/activities/${activityId}`, { params: { fields } });
   }
 
   /**
    * Get paginated activities with cursor support
    * 
-   * @param params - Query parameters including cursor
-   * @returns Paginated activity response
+   * @param params - Pagination parameters
+   * @returns Promise resolving to formatted response with activity page
    */
-  async getActivitiesPage(params: ActivitiesPageParams = {}) {
-    logger.debug('Getting activities page', { params });
-    return this.get('/api/activitiesPage', { params });
+  async getActivitiesPage(params?: ActivitiesPageParams) {
+    return this.get('/activitiesPage', { params });
   }
 
   /**
    * Get activities for specific issue
    * 
-   * @param issueId - Issue ID
-   * @param params - Query parameters
-   * @returns List of activity items for the issue
+   * @param issueId - Issue ID (e.g., "TEST-1")
+   * @param params - Query parameters for filtering
+   * @returns Promise resolving to formatted response with issue activities
    */
-  async getIssueActivities(issueId: string, params: ActivityQueryParams = {}) {
-    logger.debug('Getting issue activities', { issueId, params });
-    return this.get(`/api/issues/${issueId}/activities`, { params });
+  async getIssueActivities(issueId: string, params?: ActivityQueryParams) {
+    return this.get(`/issues/${issueId}/activities`, { params });
   }
 
   /**
    * Get single activity for specific issue
    * 
    * @param issueId - Issue ID
-   * @param activityItemId - Activity item ID
+   * @param activityId - Activity ID
    * @param fields - Fields to return
-   * @returns Single activity item
+   * @returns Promise resolving to formatted response with issue activity
    */
-  async getIssueActivity(issueId: string, activityItemId: string, fields?: string) {
-    logger.debug('Getting issue activity by ID', { issueId, activityItemId });
-    return this.get(`/api/issues/${issueId}/activities/${activityItemId}`, {
-      params: { fields }
-    });
+  async getIssueActivity(issueId: string, activityId: string, fields?: string) {
+    return this.get(`/issues/${issueId}/activities/${activityId}`, { params: { fields } });
   }
 
   /**
    * Get paginated activities for specific issue
    * 
    * @param issueId - Issue ID
-   * @param params - Query parameters including cursor
-   * @returns Paginated activity response for the issue
+   * @param params - Pagination parameters
+   * @returns Promise resolving to formatted response with issue activities page
    */
-  async getIssueActivitiesPage(issueId: string, params: ActivitiesPageParams = {}) {
-    logger.debug('Getting issue activities page', { issueId, params });
-    return this.get(`/api/issues/${issueId}/activitiesPage`, { params });
+  async getIssueActivitiesPage(issueId: string, params?: ActivitiesPageParams) {
+    return this.get(`/issues/${issueId}/activitiesPage`, { params });
   }
 }

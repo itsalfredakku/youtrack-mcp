@@ -42,7 +42,7 @@ export class SearchAssistAPIClient extends BaseAPIClient {
       ...(params.project && { folder: { $type: 'Project', shortName: params.project } })
     };
     
-    return this.post('/api/search/assist', requestBody);
+    return this.post('/search/assist', requestBody);
   }
 
   /**
