@@ -27,7 +27,9 @@ export const logger = winston.createLogger({
     new winston.transports.File({ filename: 'error.log', level: 'error' }),
     new winston.transports.File({ filename: 'combined.log' }),
     new winston.transports.Console({
-      stderrLevels: ['error'],
+      // Send ALL log levels to stderr (not stdout) for MCP compatibility
+      // MCP servers must only write JSON-RPC messages to stdout
+      stderrLevels: ['error', 'warn', 'info', 'debug', 'verbose', 'silly'],
       // Explicitly disable colors
       format: winston.format.combine(
         winston.format.uncolorize(),
