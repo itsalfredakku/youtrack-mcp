@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **🔧 CRITICAL API ENDPOINT FIX: Corrected Resource Paths**
+  - Fixed Activities API endpoints: Removed incorrect `/api` prefix (e.g., `/api/activities` → `/activities`)
+  - Fixed Commands API endpoints: Corrected to `/commands` and `/commands/assist`
+  - Fixed Search Assist API endpoint: Corrected to `/search/assist`
+  - **Root Cause**: YouTrack API base URL already includes `/api`, resource paths should not repeat it
+  - **Impact**: Activities, Commands, and Search Assist features now functional after previous 404 errors
+  - **Files Modified**: `activities-api.ts`, `commands-api.ts`, `search-assist-api.ts`
+  - **Verified**: Against OpenAPI spec at https://youtrack.devstroop.com/api/openapi.json
+
 ### Added
 - **🚀 CRITICAL PERFORMANCE IMPROVEMENT: Optimized Field Configurations**
   - Implemented separate field sets for list vs. detail operations

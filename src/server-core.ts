@@ -1731,7 +1731,8 @@ export class YouTrackMCPServer {
     switch (action) {
       case 'apply': {
         const params: any = { query };
-        if (issueIds) params.issues = issueIds.map((id: string) => ({ id }));
+        // Use idReadable instead of id - API expects { idReadable: string } format
+        if (issueIds) params.issues = issueIds.map((id: string) => ({ idReadable: id }));
         if (comment) params.comment = comment;
         if (caret !== undefined) params.caret = caret;
         if (silent !== undefined) params.silent = silent;
