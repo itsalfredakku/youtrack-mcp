@@ -1730,14 +1730,31 @@ export class YouTrackMCPServer {
     
     switch (action) {
       case 'apply': {
-        const params: any = { query };
-        // Use idReadable instead of id - API expects { idReadable: string } format
-        if (issueIds) params.issues = issueIds.map((id: string) => ({ idReadable: id }));
-        if (comment) params.comment = comment;
-        if (caret !== undefined) params.caret = caret;
-        if (silent !== undefined) params.silent = silent;
-        if (runAs) params.runAs = runAs;
-        return await client.commands.applyCommand(params, silent || false);
+        try {
+          const params: any = { query };
+          // Use idReadable instead of id - API expects { idReadable: string } format
+          if (issueIds) params.issues = issueIds.map((id: string) => ({ idReadable: id }));
+          if (comment) params.comment = comment;
+          if (caret !== undefined) params.caret = caret;
+          if (silent !== undefined) params.silent = silent;
+          if (runAs) params.runAs = runAs;
+          return await client.commands.applyCommand(params, silent || false);
+        } catch (error: any) {
+          // Enhance error messages for field value issues
+          if (error.message && (
+            error.message.includes('expected:') ||
+            error.message.includes('Type expected') ||
+            error.message.includes('State expected') ||
+            error.message.includes('Priority expected')
+          )) {
+            const enhancedMessage = `${error.message}\n\n💡 Tip: Use the 'suggest' action first to get valid field values:\n` +
+              `   { action: 'suggest', query: '${query}', caret: ${query.length}, issueIds: [...] }\n` +
+              `This will show you the correct values accepted by your YouTrack instance.`;
+            
+            throw new Error(enhancedMessage);
+          }
+          throw error;
+        }
       }
       case 'suggest':
         return await client.commands.getCommandSuggestions(query, caret, issueIds);

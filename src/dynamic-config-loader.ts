@@ -93,46 +93,127 @@ export class DynamicConfigLoader {
    */
   private async fetchFieldValues(fieldName: string): Promise<string[]> {
     try {
-      // First, get the custom field to find its bundle
+      // Try method 1: Search for the field by name
       const fieldsResponse = await this.axios.get('/admin/customFieldSettings/customFields', {
         params: {
-          fields: 'id,name,fieldType(valueType),bundles(id)',
-          query: fieldName
+          fields: 'id,name,fieldType(id,valueType),fieldDefaults(bundle(id,values(name,archived,ordinal)))',
+          $top: 100
         }
       });
 
       const fields = fieldsResponse.data || [];
-      const field = fields.find((f: any) => f.name === fieldName);
+      const field = fields.find((f: any) => 
+        f.name === fieldName || 
+        f.name?.toLowerCase() === fieldName.toLowerCase()
+      );
 
-      if (!field || !field.bundles || field.bundles.length === 0) {
-        logger.warn(`Field ${fieldName} not found or has no bundles`);
+      if (!field) {
+        logger.debug(`Field ${fieldName} not found in customFields, trying alternative method`);
+        return await this.fetchFieldValuesFromProject(fieldName);
+      }
+
+      // Try to get values from fieldDefaults bundle
+      if (field.fieldDefaults?.bundle?.values && field.fieldDefaults.bundle.values.length > 0) {
+        const values = field.fieldDefaults.bundle.values
+          .filter((v: any) => !v.archived)
+          .sort((a: any, b: any) => (a.ordinal || 0) - (b.ordinal || 0))
+          .map((v: any) => v.name);
+        
+        if (values.length > 0) {
+          logger.debug(`Found ${values.length} values for ${fieldName} from fieldDefaults`);
+          return values;
+        }
+      }
+
+      // If fieldDefaults doesn't have values, try to get the bundle directly
+      if (field.fieldType?.valueType) {
+        const bundleType = field.fieldType.valueType;
+        
+        // Try to find bundles for this field type
+        const bundlesResponse = await this.axios.get(
+          `/admin/customFieldSettings/bundles/${bundleType}`,
+          {
+            params: {
+              fields: 'id,name,values(name,archived,ordinal)',
+              $top: 100
+            }
+          }
+        );
+
+        const bundles = bundlesResponse.data || [];
+        if (bundles.length > 0) {
+          // Use the first bundle's values
+          const bundle = bundles[0];
+          if (bundle.values && bundle.values.length > 0) {
+            const values = bundle.values
+              .filter((v: any) => !v.archived)
+              .sort((a: any, b: any) => (a.ordinal || 0) - (b.ordinal || 0))
+              .map((v: any) => v.name);
+            
+            if (values.length > 0) {
+              logger.debug(`Found ${values.length} values for ${fieldName} from bundle ${bundle.id}`);
+              return values;
+            }
+          }
+        }
+      }
+
+      logger.warn(`No values found for field ${fieldName}`);
+      return [];
+
+    } catch (error: any) {
+      logger.warn(`Failed to fetch ${fieldName} values: ${error.message}`);
+      return await this.fetchFieldValuesFromProject(fieldName);
+    }
+  }
+
+  /**
+   * Fallback method: Try to fetch field values from a project
+   */
+  private async fetchFieldValuesFromProject(fieldName: string): Promise<string[]> {
+    try {
+      // Get first project
+      const projectsResponse = await this.axios.get('/admin/projects', {
+        params: {
+          fields: 'id,shortName',
+          $top: 1
+        }
+      });
+
+      const projects = projectsResponse.data || [];
+      if (projects.length === 0) {
         return [];
       }
 
-      // Get the bundle values
-      const bundleId = field.bundles[0].id;
-      const bundleType = field.fieldType?.valueType || 'enum';
+      const projectId = projects[0].id;
       
-      const valuesResponse = await this.axios.get(
-        `/admin/customFieldSettings/bundles/${bundleType}/${bundleId}/values`,
-        {
-          params: {
-            fields: 'name,description,archived,ordinal',
-            $top: 100
-          }
+      // Get custom fields for this project
+      const response = await this.axios.get(`/admin/projects/${projectId}`, {
+        params: {
+          fields: `customFields(field(name),bundle(values(name,archived,ordinal)))`
         }
+      });
+
+      const customFields = response.data.customFields || [];
+      const field = customFields.find((f: any) => 
+        f.field?.name === fieldName || 
+        f.field?.name?.toLowerCase() === fieldName.toLowerCase()
       );
 
-      const values = valuesResponse.data || [];
-      
-      // Filter out archived values and sort by ordinal
-      return values
+      if (!field || !field.bundle || !field.bundle.values) {
+        return [];
+      }
+
+      const values = field.bundle.values
         .filter((v: any) => !v.archived)
         .sort((a: any, b: any) => (a.ordinal || 0) - (b.ordinal || 0))
         .map((v: any) => v.name);
 
-    } catch (error) {
-      logger.warn(`Failed to fetch ${fieldName} values`, error);
+      logger.debug(`Found ${values.length} values for ${fieldName} from project ${projectId}`);
+      return values;
+
+    } catch (error: any) {
+      logger.debug(`Fallback method failed for ${fieldName}: ${error.message}`);
       return [];
     }
   }
