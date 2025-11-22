@@ -30,9 +30,11 @@ npm install
 #### Option A: Environment Variables
 
 ```bash
-export YOUTRACK_URL="https://your-instance.youtrack.cloud/api"
+export YOUTRACK_URL="https://your-instance.youtrack.cloud"
 export YOUTRACK_TOKEN="perm:your-permanent-token-here"
 ```
+
+**Important**: Do NOT include `/api` suffix in YOUTRACK_URL. The server adds this automatically.
 
 #### Option B: Configuration File
 
@@ -40,7 +42,7 @@ Create `config.json`:
 
 ```json
 {
-  "youtrackUrl": "https://your-instance.youtrack.cloud/api",
+  "youtrackUrl": "https://your-instance.youtrack.cloud",
   "youtrackToken": "perm:your-permanent-token-here"
 }
 ```
@@ -57,9 +59,9 @@ Add to your Claude Desktop configuration:
   "mcpServers": {
     "youtrack": {
       "command": "node",
-      "args": ["/path/to/youtrack-mcp/build/index.js"],
+      "args": ["/path/to/youtrack-mcp/dist/index.js"],
       "env": {
-        "YOUTRACK_URL": "https://your-instance.youtrack.cloud/api",
+        "YOUTRACK_URL": "https://your-instance.youtrack.cloud",
         "YOUTRACK_TOKEN": "perm:your-token-here"
       }
     }
@@ -95,6 +97,45 @@ You should see:
 6. Select scope: **YouTrack** (full access)
 7. Click **Create**
 8. Copy the token (starts with `perm:`)
+
+## Verify Installation
+
+### Check Connection
+
+Start the server and verify it connects to YouTrack:
+
+```bash
+npm start
+```
+
+**Expected output**:
+```
+[INFO] YouTrack MCP Server starting...
+[INFO] Connected to YouTrack: https://your-instance.youtrack.cloud
+[INFO] Dynamic configuration loaded:
+  - States: 12 values
+  - Priorities: 5 values  
+  - Types: 8 values
+[INFO] MCP Server ready on stdio
+```
+
+### Health Check (Remote Mode)
+
+If using remote/SSE mode:
+
+```bash
+npm run start:remote &
+curl http://localhost:3001/health
+```
+
+**Expected response**:
+```json
+{
+  "status": "ok",
+  "youtrack": "connected",
+  "version": "1.0.0"
+}
+```
 
 ## First Steps
 

@@ -6,28 +6,30 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6)
 ![MCP](https://img.shields.io/badge/Protocol-MCP-blueviolet)
+![API](https://img.shields.io/badge/YouTrack-2025.2-green)
 
 </div>
 
-> Enterprise‑grade MCP server for JetBrains **YouTrack** giving AI assistants (Claude, VSCode MCP extensions, Continue.dev, Cline, Zed, custom connectors) safe, tool-based access to issues, sprints, dependencies (Gantt + critical path), time tracking and knowledge base content.
+> Enterprise‑grade MCP server for JetBrains **YouTrack 2025.2** giving AI assistants (Claude, VSCode MCP extensions, Continue.dev, Cline, Zed, custom connectors) safe, tool-based access to issues, sprints, dependencies (Gantt + critical path), time tracking and knowledge base content. Fully validated against official OpenAPI specification.
 
 ---
 
 ## Table of Contents
 1. [Quick Start](#quick-start)
 2. [Highlights](#highlights)
-3. [Environment & Configuration](#environment--configuration)
-4. [MCP Client Integration](#mcp-client-integration)
-5. [Usage Examples](#usage-examples)
-6. [Analytics (Gantt & Critical Path)](#analytics-gantt--critical-path)
-7. [Tool Catalog Summary](#tool-catalog-summary)
-8. [Architecture](#architecture)
-9. [Development](#development)
-10. [Troubleshooting](#troubleshooting)
-11. [Security & Permissions](#security--permissions)
-12. [Roadmap](#roadmap)
-13. [Contributing](#contributing)
-14. [License](#license)
+3. [What's New](#whats-new)
+4. [Environment & Configuration](#environment--configuration)
+5. [MCP Client Integration](#mcp-client-integration)
+6. [Usage Examples](#usage-examples)
+7. [Analytics (Gantt & Critical Path)](#analytics-gantt--critical-path)
+8. [Tool Catalog Summary](#tool-catalog-summary)
+9. [Architecture](#architecture)
+10. [Development](#development)
+11. [Troubleshooting](#troubleshooting)
+12. [Security & Permissions](#security--permissions)
+13. [Roadmap](#roadmap)
+14. [Contributing](#contributing)
+15. [License](#license)
 
 ---
 
@@ -68,6 +70,8 @@ curl http://localhost:3001/health
 | Performance | TTL caching, structured logging, graceful fallbacks |
 | Reliability | Consistent response envelope & error normalization |
 | **API Coverage** | 🆕 **~80%** of YouTrack REST API (12 of 15 domain areas) |
+| **Code Quality** | 🆕 ESLint compliant, TypeScript strict mode, 100% CI passing |
+| **API Validation** | 🆕 Verified against official YouTrack OpenAPI 3.0.1 spec |
 
 ### 🌟 New: Dynamic Configuration
 
@@ -80,6 +84,28 @@ The MCP server now automatically adapts to your YouTrack customization! On start
 **No more errors** from AI assistants suggesting `"state: Open"` when your instance uses `"state: In Progress"`!
 
 See [Dynamic Configuration Documentation](docs/DYNAMIC_CONFIGURATION.md) for details.
+
+---
+
+## What's New
+
+### 🎉 Production Ready (November 2025)
+
+The YouTrack MCP Server has reached **v1.0.0 production status** with:
+
+- ✅ **100% ESLint Compliant** - All code quality checks passing (Nov 22, 2025)
+- ✅ **OpenAPI Validated** - Verified against official YouTrack 2025.2 spec (Nov 22, 2025)
+- ✅ **Dynamic Configuration** - Auto-loads YOUR field values on startup (Nov 19, 2025)
+- ✅ **Multi-Project Support** - Secure project scoping (Nov 10, 2025)
+- ✅ **80% API Coverage** - 12 of 15 YouTrack domain areas implemented
+
+**Recent Fixes**:
+- Fixed all 26 ESLint violations across test suites and API clients
+- Validated all endpoints against official OpenAPI 3.0.1 specification
+- Corrected URL format handling (server now adds `/api` automatically)
+- Resolved dynamic config loader field fetching with three-tier strategy
+
+📄 **[Read Full Release Notes](docs/RELEASE_NOTES.md)** for detailed changelog and migration guide.
 
 ---
 
@@ -97,8 +123,8 @@ WEBHOOK_PORT=3000
 WEBHOOK_SECRET=
 ```
 | Variable | Required | Description | Default |
-|----------|-----|-------------|---------|
-| `YOUTRACK_URL` | ✅ | Base URL (no trailing slash) | — |
+|----------|----------|-------------|---------|
+| `YOUTRACK_URL` | ✅ | Base URL without `/api` suffix (e.g., `https://instance.youtrack.cloud`) | — |
 | `YOUTRACK_TOKEN` | ✅ | Permanent token (Profile → Tokens) | — |
 | `PROJECT_ID` | — | Default project shortName | — |
 | `LOG_LEVEL` | — | error/warn/info/debug | info |
@@ -276,14 +302,30 @@ Structure: `src/index.ts` (entry), `src/api/domains` (domain clients), `src/tool
 ---
 
 ## Troubleshooting
+
+### Quick Fixes
+
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | 401 Unauthorized | Missing scope / expired token | Regenerate token with required permissions |
+| 404 Not Found (double `/api/api`) | URL has `/api` suffix | Remove `/api` from `YOUTRACK_URL` |
 | Project not found | Hidden / archived / wrong ID | Use internal ID or verify access |
 | Empty analytics | No issues in project | Seed baseline issues |
 | SSE disconnects | Proxy idle timeout | Enable keep-alive / tune LB |
+| AI wrong field values | Dynamic config failed | Check token permissions, restart server |
+| Empty search results | `PROJECT_ID` too restrictive | Remove or update `PROJECT_ID` |
 
-Checklist: absolute path, no trailing slash, full token, JSON env strings. Use `LOG_LEVEL=debug` for deep inspection.
+**Configuration Checklist**:
+- ✅ Absolute path in MCP client config
+- ✅ No trailing slash on `YOUTRACK_URL`
+- ✅ **No `/api` suffix** on `YOUTRACK_URL` (server adds automatically)
+- ✅ Full token with `perm:` prefix
+- ✅ JSON env values are strings
+- ✅ Token has required permissions
+
+**Debug Mode**: Use `LOG_LEVEL=debug` for detailed inspection.
+
+📖 **[Complete Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Comprehensive solutions for all common issues.
 
 ---
 
