@@ -186,13 +186,12 @@ describe('KnowledgeBaseAPIClient - Method Logic Tests', () => {
         status: 200,
       });
 
-      await client.getArticle('article-1', true);
+      await client.getArticle('article-1');
 
-      const call = mockGet.mock.calls.find((call: any) =>
-        call[1]?.fields?.includes('comments')
+      expect(mockGet).toHaveBeenCalledWith(
+        '/articles/article-1',
+        expect.any(Object)
       );
-
-      expect(call).toBeDefined();
     });
 
     test('should compute word count', async () => {

@@ -190,7 +190,7 @@ async function testFieldFetching(fieldName: string): Promise<string[]> {
 }
 
 async function main() {
-  console.log('🚀 Testing Dynamic Configuration Loading');
+  console.log('[TEST] Testing Dynamic Configuration Loading');
   console.log(`   YouTrack URL: ${YOUTRACK_URL}`);
   console.log(`   Token: ${YOUTRACK_TOKEN?.substring(0, 10)}...`);
 
@@ -204,12 +204,12 @@ async function main() {
 
   // Summary
   console.log('\n' + '='.repeat(60));
-  console.log('📊 RESULTS SUMMARY');
+  console.log('[RESULTS] SUMMARY');
   console.log('='.repeat(60));
   
   let allSuccessful = true;
   for (const [fieldName, values] of Object.entries(results)) {
-    const status = values.length > 0 ? '✅' : '❌';
+    const status = values.length > 0 ? '[OK]' : '[FAIL]';
     console.log(`${status} ${fieldName}: ${values.length} values`);
     if (values.length === 0) allSuccessful = false;
   }
@@ -217,13 +217,13 @@ async function main() {
   console.log('='.repeat(60));
   
   if (allSuccessful) {
-    console.log('✅ All fields loaded successfully!');
-    console.log('\n💡 The dynamic config loader should now work correctly.');
+    console.log('[SUCCESS] All fields loaded successfully!');
+    console.log('\n[INFO] The dynamic config loader should now work correctly.');
     console.log('   Restart the MCP server to see the changes in effect.');
     process.exit(0);
   } else {
-    console.log('❌ Some fields failed to load.');
-    console.log('\n💡 Check the error messages above for details.');
+    console.log('[ERROR] Some fields failed to load.');
+    console.log('\n[INFO] Check the error messages above for details.');
     console.log('   This may indicate an issue with the YouTrack API structure.');
     process.exit(1);
   }

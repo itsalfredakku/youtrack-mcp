@@ -1342,8 +1342,8 @@ export class YouTrackMCPServer {
           includeContent: false 
         });
       case 'get':
-        return await client.knowledgeBase.getArticle(articleId, false);
-      case 'create':
+        return await client.knowledgeBase.getArticle(articleId);
+      case 'create': {
         // Resolve projectId from args or environment variable
         const resolvedProjectId = this.resolveProjectId(projectId);
         return await client.knowledgeBase.createArticle({ 
@@ -1353,6 +1353,7 @@ export class YouTrackMCPServer {
           tags, 
           project: resolvedProjectId // Map projectId to project parameter
         });
+      }
       case 'update':
         return await client.knowledgeBase.updateArticle(articleId, { title, content, summary, tags });
       case 'delete':
@@ -1747,7 +1748,7 @@ export class YouTrackMCPServer {
             error.message.includes('State expected') ||
             error.message.includes('Priority expected')
           )) {
-            const enhancedMessage = `${error.message}\n\n💡 Tip: Use the 'suggest' action first to get valid field values:\n` +
+            const enhancedMessage = `${error.message}\n\n[TIP] Use the 'suggest' action first to get valid field values:\n` +
               `   { action: 'suggest', query: '${query}', caret: ${query.length}, issueIds: [...] }\n` +
               `This will show you the correct values accepted by your YouTrack instance.`;
             

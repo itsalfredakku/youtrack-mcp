@@ -503,7 +503,7 @@ export class AdminAPIClient extends BaseAPIClient {
       }
       
       return result;
-    } catch (error) {
+    } catch {
       // If we can't detect custom fields, just return empty object
       return {};
     }
@@ -573,7 +573,7 @@ export class AdminAPIClient extends BaseAPIClient {
           if (dependencies.length > 0) {
             dependencyMap.set(issueId, dependencies);
           }
-        } catch (error) {
+        } catch {
           // If we can't fetch links for an issue, just skip it
         }
       });
@@ -622,7 +622,7 @@ export class AdminAPIClient extends BaseAPIClient {
       }
       
       return allSprints;
-    } catch (error) {
+    } catch {
       // If we can't fetch sprints, return empty array
       return [];
     }
@@ -650,7 +650,7 @@ export class AdminAPIClient extends BaseAPIClient {
           if (response.data?.sprints && Array.isArray(response.data.sprints)) {
             sprintMap.set(issueId, response.data.sprints);
           }
-        } catch (error) {
+        } catch {
           // If we can't fetch sprint info for an issue, skip it
         }
       });
@@ -830,7 +830,7 @@ export class AdminAPIClient extends BaseAPIClient {
               });
             }
           }
-        } catch (error) {
+        } catch {
           // If we can't fetch work items for an issue, skip it
         }
       });
@@ -870,7 +870,7 @@ export class AdminAPIClient extends BaseAPIClient {
               estimatesMap.set(issueId, estimateField.value.minutes);
             }
           }
-        } catch (error) {
+        } catch {
           // If we can't fetch estimate for an issue, skip it
         }
       });
@@ -1356,7 +1356,7 @@ export class AdminAPIClient extends BaseAPIClient {
               (sum: number, item: any) => sum + (item.duration?.minutes || 0),
               0
             ) / 60;
-          } catch (error) {
+          } catch {
             // Work items may not be available, skip
           }
 

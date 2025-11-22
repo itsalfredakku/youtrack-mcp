@@ -414,7 +414,7 @@ export class IssuesAPIClient extends BaseAPIClient {
    * Add work item (log time) to issue
    * NOTE: This endpoint doesn't exist in YouTrack API. Use /workItems POST instead.
    */
-  async addWorkItem(issueId: string, duration: string, description?: string, date?: string, workType?: string): Promise<MCPResponse> {
+  async addWorkItem(issueId: string, duration: string): Promise<MCPResponse> {
     return ResponseFormatter.formatError(
       'This method is deprecated. Use client.workItems.logTimeToIssue() instead.',
       { 

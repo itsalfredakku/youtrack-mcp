@@ -81,7 +81,7 @@ export class KnowledgeBaseAPIClient extends BaseAPIClient {
       // Add tags after creation if provided
       if (params.tags && params.tags.length > 0 && articleId) {
         try {
-          await this.addTagsToArticle(articleId, params.tags);
+          await this.addTagsToArticle();
         } catch (tagError) {
           // Log but don't fail - article was created successfully
           console.warn(`Article created but tags could not be added: ${tagError}`);
@@ -98,7 +98,7 @@ export class KnowledgeBaseAPIClient extends BaseAPIClient {
   /**
    * Add tags to an article by creating or finding tag IDs
    */
-  private async addTagsToArticle(articleId: string, tagNames: string[]): Promise<void> {
+  private async addTagsToArticle(): Promise<void> {
     // YouTrack requires tag IDs, not names
     // For now, we'll skip automatic tag addition
     // Tags should be managed through YouTrack UI or separate tag management API
@@ -109,7 +109,7 @@ export class KnowledgeBaseAPIClient extends BaseAPIClient {
   /**
    * Update article visibility separately (more reliable than setting during creation)
    */
-  private async updateArticleVisibility(articleId: string, visibility: 'public' | 'project' | 'private'): Promise<void> {
+  private async updateArticleVisibility(): Promise<void> {
     // Visibility in YouTrack API requires specific structure
     // For now, skip this as it requires complex permission group handling
     // Articles default to appropriate visibility based on project settings
@@ -119,7 +119,7 @@ export class KnowledgeBaseAPIClient extends BaseAPIClient {
   /**
    * Get article by ID with full content
    */
-  async getArticle(articleId: string, includeComments: boolean = false): Promise<MCPResponse> {
+  async getArticle(articleId: string): Promise<MCPResponse> {
     const endpoint = `/articles/${articleId}`;
     const params = {
       fields: ArticleFields.DETAIL // Use detailed fields for single article

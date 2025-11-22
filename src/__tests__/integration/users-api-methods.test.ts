@@ -10,7 +10,6 @@ import type { YouTrackConfig } from '../../api/base/base-client.js';
 describe('UsersAPIClient - Method Logic Tests', () => {
   let client: UsersAPIClient;
   let mockGet: any;
-  let mockPost: any;
 
   beforeEach(() => {
     const config: YouTrackConfig = {
@@ -20,7 +19,6 @@ describe('UsersAPIClient - Method Logic Tests', () => {
     
     client = new UsersAPIClient(config);
     mockGet = jest.spyOn((client as any).axios, 'get');
-    mockPost = jest.spyOn((client as any).axios, 'post');
   });
 
   afterEach(() => {

@@ -9,7 +9,6 @@
 import { BaseAPIClient } from '../base/base-client.js';
 import { ResponseFormatter } from '../base/response-formatter.js';
 import { MCPResponse } from '../base/base-client.js';
-import { logger } from '../../logger.js';
 
 /**
  * Saved query data

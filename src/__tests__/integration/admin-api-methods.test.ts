@@ -11,8 +11,6 @@ describe('AdminAPIClient - Method Logic Tests', () => {
   let client: AdminAPIClient;
   let mockGet: any;
   let mockPost: any;
-  let mockPut: any;
-  let mockDelete: any;
 
   beforeEach(() => {
     const config: YouTrackConfig = {
@@ -23,8 +21,6 @@ describe('AdminAPIClient - Method Logic Tests', () => {
     client = new AdminAPIClient(config);
     mockGet = jest.spyOn((client as any).axios, 'get');
     mockPost = jest.spyOn((client as any).axios, 'post');
-    mockPut = jest.spyOn((client as any).axios, 'put');
-    mockDelete = jest.spyOn((client as any).axios, 'delete');
   });
 
   afterEach(() => {

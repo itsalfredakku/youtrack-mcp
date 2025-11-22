@@ -148,9 +148,6 @@ describe('FieldSelector', () => {
 
   describe('Payload Reduction', () => {
     it('should significantly reduce payload size for Gantt queries', () => {
-      // Typical full query would have 50+ fields
-      const fullFieldCount = 50;
-      
       // GANTT selector only includes essential fields
       const ganttFields = FieldSelector.GANTT.split(',').length;
       

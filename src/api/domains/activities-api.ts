@@ -8,7 +8,6 @@
  */
 
 import { BaseAPIClient } from '../base/base-client.js';
-import { logger } from '../../logger.js';
 
 /**
  * Activity query parameters
